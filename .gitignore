@@ -114,3 +114,5 @@ trained_models/
 .idea/
 __MACOSX/
 
+# HPC stuff
+hpc_logs/
