@@ -43,7 +43,20 @@ class RumexDataset(BaseDataSet):
         image = np.asarray(Image.open(image_path).convert('RGB'), dtype=np.float32)
         image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
         label = np.asarray(Image.open(label_path), dtype=np.int32)
-        label = (self._get_sub_img(label, subimg_id["split_x"], subimg_id["split_y"]))[:,:,0]
+        label = (self._get_sub_img(label, subimg_id["split_x"], subimg_id["split_y"]))
+
+        # Write images for verifying correctness.
+        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
+        # cropped_label = np.where(label == 1, 120, label)
+        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
+        # mask = Image.new("L", cropped_label.size, 128)
+        # out_img = Image.composite(cropped_img, cropped_label, mask)
+        # id = subimg_id["sub_img_id"]
+        # cropped_img.save(f"test_output/{id}.jpeg")
+        # out_img.save(f"test_output/{id}_masked.jpeg")
+
+        # For training, only one channel needed.
+        label = label[:,:,0]
         return image, label, subimg_id["sub_img_id"]
 
 class Rumex(BaseDataLoader):
