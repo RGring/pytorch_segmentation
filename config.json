@@ -1,77 +1,68 @@
 {
-    "name": "Rumex_SegResNet",
-    "n_gpu": 0,
-    "use_synch_bn": true,
-
     "arch": {
-        "type": "SegResNet",
         "args": {
             "backbone": "resnet50",
-            "freeze_bn": false,
-            "freeze_backbone": false
-        }
+            "freeze_backbone": false,
+            "freeze_bn": false
+        },
+        "type": "PSPNet"
     },
-
-    "train_loader": {
-        "type": "Rumex",
-        "args":{
-            "data_dir": "/home/rog/data/20200411_Odense",
-            "batch_size": 8,
-            "base_size": 900,
-            "crop_size": 608,
-            "augment": true,
-            "shuffle": true,
-            "scale": true,
-            "flip": true,
-            "rotate": true,
-            "blur": false,
-            "split": "img_train",
-            "num_workers": 8
-        }
-    },
-
-    "val_loader": {
-        "type": "Rumex",
-        "args":{
-            "data_dir": "/home/rog/data/20200411_Odense",
-            "batch_size": 8,
-            "crop_size": 608,
-            "val": true,
-            "split": "img_val",
-            "num_workers": 4
-        }
-    },
-
-    "optimizer": {
-        "type": "SGD",
-        "differential_lr": true,
-        "args":{
-            "lr": 0.01,
-            "weight_decay": 1e-4,
-            "momentum": 0.9
-        }
-    },
-
-    "loss": "CrossEntropyLoss2d",
     "ignore_index": 255,
+    "loss": "CrossEntropyLoss2d",
     "lr_scheduler": {
-        "type": "Poly",
-        "args": {}
+        "args": {},
+        "type": "Poly"
     },
-
+    "n_gpu": 1,
+    "name": "Rumex_PSPNet",
+    "optimizer": {
+        "args": {
+            "lr": 0.01,
+            "momentum": 0.9,
+            "weight_decay": 0.0001
+        },
+        "differential_lr": true,
+        "type": "SGD"
+    },
+    "train_loader": {
+        "args": {
+            "augment": true,
+            "base_size": 816,
+            "batch_size": 8,
+            "blur": false,
+            "crop_size": 816,
+            "data_dir": "/home/rog/data/20200411_Odense",
+            "flip": true,
+            "num_workers": 8,
+            "rotate": true,
+            "scale": true,
+            "shuffle": true,
+            "split": "img_train"
+        },
+        "type": "Rumex"
+    },
     "trainer": {
-        "epochs": 50,
-        "save_dir": "saved/",
-        "save_period": 10,
-  
-        "monitor": "max Mean_IoU",
         "early_stop": 10,
-        
-        "tensorboard": true,
+        "epochs": 300,
         "log_dir": "saved/runs",
         "log_per_iter": 20,
-
+        "monitor": "max Mean_IoU",
+        "save_dir": "saved/",
+        "save_period": 30,
+        "tensorboard": true,
         "val": true,
         "val_per_epochs": 5
+    },
+    "use_synch_bn": true,
+    "val_loader": {
+        "args": {
+            "batch_size": 8,
+            "crop_size": 816,
+            "data_dir": "/home/rog/data/20200411_Odense",
+            "num_workers": 4,
+            "split": "img_val",
+            "val": true
+        },
+        "type": "Rumex"
     }
 }
