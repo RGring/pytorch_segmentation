@@ -59,7 +59,7 @@ class RumexDataset(BaseDataSet):
         image = np.asarray(Image.open(image_path).convert('RGB'), dtype=np.float32)
         mask_img = np.zeros(image.shape, dtype=np.int32)
         for pol in self.annotations[os.path.basename(image_path)]:
-            cv2.fillPoly(mask_img, pts = [pol], color=(1))
+            cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
 
 
         image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
@@ -76,6 +76,7 @@ class RumexDataset(BaseDataSet):
         # out_img.save(f"test_output/{id}_masked.jpeg")
 
         # For training, only one channel needed.
+        label = label[:, :, 0]
         return image, label, subimg_id["sub_img_id"]
 
 class Rumex(BaseDataLoader):
