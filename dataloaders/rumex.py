@@ -21,9 +21,12 @@ class RumexDataset(BaseDataSet):
         super(RumexDataset, self).__init__(**kwargs)
 
     def _set_files(self):
-        if self.split in  ["imgs_train", "imgs_val"]:
+        if self.split in  ["imgs_train", "imgs_val", "imgs_fake/hsv", "imgs_fake/raw", "imgs_fake/poisson"]:
             self.image_dir = os.path.join(self.root, self.split)
-            self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
+            if "imgs_fake" in self.split:
+                self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
+            else:
+                self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
 
             file_ids = [os.path.basename(path).split('.')[0] for path in glob(self.image_dir + '/*.jpg')]
             self.files = []
