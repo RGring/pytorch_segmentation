@@ -21,20 +21,18 @@ class RumexDataset(BaseDataSet):
         super(RumexDataset, self).__init__(**kwargs)
 
     def _set_files(self):
-        if self.split in  ["imgs_train", "imgs_val", "imgs_fake/hsv", "imgs_fake/raw", "imgs_fake/poisson", "imgs_fake/mix"]:
-            self.image_dir = os.path.join(self.root, self.split)
-            if "imgs_fake" in self.split:
-                self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
-            else:
-                self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
+        self.image_dir = os.path.join(self.root, self.split)
+        if "imgs_fake" in self.split:
+            self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
+        else:
+            self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
 
-            file_ids = [os.path.basename(path).split('.')[0] for path in glob(self.image_dir + '/*.jpg')]
-            self.files = []
-            for id in file_ids:
-                for i in range(self.num_subimg_splits):
-                    for j in range(self.num_subimg_splits):
-                        self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
-        else: raise ValueError(f"Invalid split name {self.split}")
+        file_ids = [os.path.basename(path).split('.')[0] for path in glob(self.image_dir + '/*.jpg')]
+        self.files = []
+        for id in file_ids:
+            for i in range(self.num_subimg_splits):
+                for j in range(self.num_subimg_splits):
+                    self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
 
     def _read_cvat_annotations(self, path_to_annotation_file):
         root = ET.parse(path_to_annotation_file).getroot()
@@ -70,14 +68,14 @@ class RumexDataset(BaseDataSet):
         label = mask_img
 
         # Write images for verifying correctness.
-        cropped_img = Image.fromarray(image.astype(dtype="uint8"))
-        cropped_label = np.where(label == 1, 120, label)
-        cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
-        mask = Image.new("L", cropped_label.size, 128)
-        out_img = Image.composite(cropped_img, cropped_label, mask)
-        id = subimg_id["sub_img_id"]
-        cropped_img.save(f"test_output/{id}.jpeg")
-        out_img.save(f"test_output/{id}_masked.jpeg")
+        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
+        # cropped_label = np.where(label == 1, 120, label)
+        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
+        # mask = Image.new("L", cropped_label.size, 128)
+        # out_img = Image.composite(cropped_img, cropped_label, mask)
+        # id = subimg_id["sub_img_id"]
+        # cropped_img.save(f"test_output/{id}.jpeg")
+        # out_img.save(f"test_output/{id}_masked.jpeg")
 
         # For training, only one channel needed.
         label = label[:, :, 0]
