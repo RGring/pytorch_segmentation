@@ -76,7 +76,7 @@ class BaseDataSet(Dataset):
         h, w, _ = image.shape
         # Rotate the image with an angle between -10 and 10
         if self.rotate:
-            angle = random.randint(-10, 10)
+            angle = random.randint(-180, 180)
             center = (w / 2, h / 2)
             rot_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
             image = cv2.warpAffine(image, rot_matrix, (w, h), flags=cv2.INTER_LINEAR)#, borderMode=cv2.BORDER_REFLECT)
