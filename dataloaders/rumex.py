@@ -21,7 +21,7 @@ class RumexDataset(BaseDataSet):
         super(RumexDataset, self).__init__(**kwargs)
 
     def _set_files(self):
-        if self.split in  ["imgs_train", "imgs_val", "imgs_fake/hsv", "imgs_fake/raw", "imgs_fake/poisson"]:
+        if self.split in  ["imgs_train", "imgs_val", "imgs_fake/hsv", "imgs_fake/raw", "imgs_fake/poisson", "imgs_fake/mix"]:
             self.image_dir = os.path.join(self.root, self.split)
             if "imgs_fake" in self.split:
                 self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
@@ -65,18 +65,19 @@ class RumexDataset(BaseDataSet):
             cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
 
 
-        image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
-        label = (self._get_sub_img(mask_img, subimg_id["split_x"], subimg_id["split_y"]))
+        # image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
+        # label = (self._get_sub_img(mask_img, subimg_id["split_x"], subimg_id["split_y"]))
+        label = mask_img
 
         # Write images for verifying correctness.
-        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
-        # cropped_label = np.where(label == 1, 120, label)
-        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
-        # mask = Image.new("L", cropped_label.size, 128)
-        # out_img = Image.composite(cropped_img, cropped_label, mask)
-        # id = subimg_id["sub_img_id"]
-        # cropped_img.save(f"test_output/{id}.jpeg")
-        # out_img.save(f"test_output/{id}_masked.jpeg")
+        cropped_img = Image.fromarray(image.astype(dtype="uint8"))
+        cropped_label = np.where(label == 1, 120, label)
+        cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
+        mask = Image.new("L", cropped_label.size, 128)
+        out_img = Image.composite(cropped_img, cropped_label, mask)
+        id = subimg_id["sub_img_id"]
+        cropped_img.save(f"test_output/{id}.jpeg")
+        out_img.save(f"test_output/{id}_masked.jpeg")
 
         # For training, only one channel needed.
         label = label[:, :, 0]
