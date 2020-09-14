@@ -15,7 +15,7 @@ class RumexDataset(BaseDataSet):
     """
     def __init__(self, **kwargs):
         # Must be > 3, check if set in config
-        self.num_subimg_splits = 3
+        self.num_subimg_splits = 0
         self.num_classes = 2
         self.palette = palette.get_voc_palette(self.num_classes)
         super(RumexDataset, self).__init__(**kwargs)
@@ -30,9 +30,12 @@ class RumexDataset(BaseDataSet):
         file_ids = [os.path.basename(path).split('.')[0] for path in glob(self.image_dir + '/*.jpg')]
         self.files = []
         for id in file_ids:
-            for i in range(self.num_subimg_splits):
-                for j in range(self.num_subimg_splits):
-                    self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
+            if self.num_subimg_splits > 0:
+                for i in range(self.num_subimg_splits):
+                    for j in range(self.num_subimg_splits):
+                        self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
+            else:
+                self.files.append({"file_id": id, "sub_img_id": f"{id}_{0}_{0}", "split_x": 0, "split_y": 0})
 
     def _read_cvat_annotations(self, path_to_annotation_file):
         root = ET.parse(path_to_annotation_file).getroot()
@@ -62,10 +65,11 @@ class RumexDataset(BaseDataSet):
         for pol in self.annotations[os.path.basename(image_path)]:
             cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
 
-
-        # image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
-        # label = (self._get_sub_img(mask_img, subimg_id["split_x"], subimg_id["split_y"]))
-        label = mask_img
+        if self.num_subimg_splits > 0:
+            image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
+            label = (self._get_sub_img(mask_img, subimg_id["split_x"], subimg_id["split_y"]))
+        else:
+            label = mask_img
 
         # Write images for verifying correctness.
         # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
