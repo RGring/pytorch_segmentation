@@ -24,6 +24,8 @@ class RumexDataset(BaseDataSet):
         self.image_dir = os.path.join(self.root, self.split)
         if "imgs_fake" in self.split:
             self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
+        elif "backgrounds" == self.split:
+            self.annotations = []
         else:
             self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
 
@@ -62,8 +64,9 @@ class RumexDataset(BaseDataSet):
         image_path = os.path.join(self.image_dir, subimg_id["file_id"] + '.jpg')
         image = np.asarray(Image.open(image_path).convert('RGB'), dtype=np.float32)
         mask_img = np.zeros(image.shape, dtype=np.int32)
-        for pol in self.annotations[os.path.basename(image_path)]:
-            cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
+        if self.annotations:
+            for pol in self.annotations[os.path.basename(image_path)]:
+                cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
 
         if self.num_subimg_splits > 0:
             image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])

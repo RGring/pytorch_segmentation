@@ -34,6 +34,10 @@ class Trainer(BaseTrainer):
 
         torch.backends.cudnn.benchmark = True
 
+    def validate(self):
+        log = self._valid_epoch(0, tb_log=False)
+        print(log)
+
     def _train_epoch(self, epoch):
         self.logger.info('\n')
             
@@ -86,7 +90,7 @@ class Trainer(BaseTrainer):
             pixAcc, mIoU, _ = self._get_seg_metrics().values()
             
             # PRINT INFO
-            tbar.set_description('TRAIN ({}) | Loss: {:.3f} | Acc {:.2f} mIoU {:.2f} | B {:.2f} D {:.2f} |'.format(
+            tbar.set_description('TRAIN ({}) | Loss: {:.3f} | Acc {:.5f} mIoU {:.5f} | B {:.2f} D {:.2f} |'.format(
                                                 epoch, self.total_loss.average, 
                                                 pixAcc, mIoU,
                                                 self.batch_time.average, self.data_time.average))
@@ -106,7 +110,7 @@ class Trainer(BaseTrainer):
         #if self.lr_scheduler is not None: self.lr_scheduler.step()
         return log
 
-    def _valid_epoch(self, epoch):
+    def _valid_epoch(self, epoch, tb_log=True):
         if self.val_loader is None:
             self.logger.warning('Not data loader was passed for the validation step, No validation is performed !')
             return {}
@@ -139,29 +143,29 @@ class Trainer(BaseTrainer):
 
                 # PRINT INFO
                 pixAcc, mIoU, _ = self._get_seg_metrics().values()
-                tbar.set_description('EVAL ({}) | Loss: {:.3f}, PixelAcc: {:.2f}, Mean IoU: {:.2f} |'.format( epoch,
+                tbar.set_description('EVAL ({}) | Loss: {:.3f}, PixelAcc: {:.5f}, Mean IoU: {:.5f} |'.format( epoch,
                                                 self.total_loss.average,
                                                 pixAcc, mIoU))
-
-            # WRTING & VISUALIZING THE MASKS
-            val_img = []
-            palette = self.train_loader.dataset.palette
-            for d, t, o in val_visual:
-                d = self.restore_transform(d)
-                t, o = colorize_mask(t, palette), colorize_mask(o, palette)
-                d, t, o = d.convert('RGB'), t.convert('RGB'), o.convert('RGB')
-                [d, t, o] = [self.viz_transform(x) for x in [d, t, o]]
-                val_img.extend([d, t, o])
-            val_img = torch.stack(val_img, 0)
-            val_img = make_grid(val_img.cpu(), nrow=3, padding=5)
-            self.writer.add_image(f'{self.wrt_mode}/inputs_targets_predictions', val_img, self.wrt_step)
-
-            # METRICS TO TENSORBOARD
-            self.wrt_step = (epoch) * len(self.val_loader)
-            self.writer.add_scalar(f'{self.wrt_mode}/loss', self.total_loss.average, self.wrt_step)
             seg_metrics = self._get_seg_metrics()
-            for k, v in list(seg_metrics.items())[:-1]: 
-                self.writer.add_scalar(f'{self.wrt_mode}/{k}', v, self.wrt_step)
+            if tb_log:
+                # WRTING & VISUALIZING THE MASKS
+                val_img = []
+                palette = self.train_loader.dataset.palette
+                for d, t, o in val_visual:
+                    d = self.restore_transform(d)
+                    t, o = colorize_mask(t, palette), colorize_mask(o, palette)
+                    d, t, o = d.convert('RGB'), t.convert('RGB'), o.convert('RGB')
+                    [d, t, o] = [self.viz_transform(x) for x in [d, t, o]]
+                    val_img.extend([d, t, o])
+                val_img = torch.stack(val_img, 0)
+                val_img = make_grid(val_img.cpu(), nrow=3, padding=5)
+                self.writer.add_image(f'{self.wrt_mode}/inputs_targets_predictions', val_img, self.wrt_step)
+
+                # METRICS TO TENSORBOARD
+                self.wrt_step = (epoch) * len(self.val_loader)
+                self.writer.add_scalar(f'{self.wrt_mode}/loss', self.total_loss.average, self.wrt_step)
+                for k, v in list(seg_metrics.items())[:-1]:
+                    self.writer.add_scalar(f'{self.wrt_mode}/{k}', v, self.wrt_step)
 
             log = {
                 'val_loss': self.total_loss.average,
@@ -183,12 +187,13 @@ class Trainer(BaseTrainer):
         self.total_inter += inter
         self.total_union += union
 
+
     def _get_seg_metrics(self):
         pixAcc = 1.0 * self.total_correct / (np.spacing(1) + self.total_label)
         IoU = 1.0 * self.total_inter / (np.spacing(1) + self.total_union)
         mIoU = IoU.mean()
         return {
-            "Pixel_Accuracy": np.round(pixAcc, 3),
-            "Mean_IoU": np.round(mIoU, 3),
-            "Class_IoU": dict(zip(range(self.num_classes), np.round(IoU, 3)))
+            "Pixel_Accuracy": np.round(pixAcc, 5),
+            "Mean_IoU": np.round(mIoU, 5),
+            "Class_IoU": dict(zip(range(self.num_classes), np.round(IoU, 5)))
         }
