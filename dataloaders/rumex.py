@@ -21,23 +21,25 @@ class RumexDataset(BaseDataSet):
         super(RumexDataset, self).__init__(**kwargs)
 
     def _set_files(self):
-        self.image_dir = os.path.join(self.root, self.split)
-        if "imgs_fake" in self.split:
-            self.annotations = self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{self.split.replace("imgs_fake/", "")}.xml'))
-        elif "backgrounds" == self.split:
-            self.annotations = []
-        else:
-            self.annotations = self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml'))
-
-        file_ids = [os.path.basename(path).split('.')[0] for path in glob(self.image_dir + '/*.jpg')]
+        self.annotations = {}
         self.files = []
-        for id in file_ids:
-            if self.num_subimg_splits > 0:
-                for i in range(self.num_subimg_splits):
-                    for j in range(self.num_subimg_splits):
-                        self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
+        for split in self.split:
+            image_dir = os.path.join(self.root, split)
+            if "imgs_fake" in split:
+                self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{split.replace("imgs_fake/", "")}.xml')))
+            elif "backgrounds" == self.split:
+                pass
             else:
-                self.files.append({"file_id": id, "sub_img_id": f"{id}_{0}_{0}", "split_x": 0, "split_y": 0})
+                self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml')))
+
+            file_ids = glob(image_dir + '/*.jpg')
+            for id in file_ids:
+                if self.num_subimg_splits > 0:
+                    for i in range(self.num_subimg_splits):
+                        for j in range(self.num_subimg_splits):
+                            self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
+                else:
+                    self.files.append({"file_id": id, "sub_img_id": f"{id}_{0}_{0}", "split_x": 0, "split_y": 0})
 
     def _read_cvat_annotations(self, path_to_annotation_file):
         root = ET.parse(path_to_annotation_file).getroot()
@@ -61,7 +63,7 @@ class RumexDataset(BaseDataSet):
 
     def _load_data(self, index):
         subimg_id = self.files[index]
-        image_path = os.path.join(self.image_dir, subimg_id["file_id"] + '.jpg')
+        image_path = subimg_id["file_id"]
         image = np.asarray(Image.open(image_path).convert('RGB'), dtype=np.float32)
         mask_img = np.zeros(image.shape, dtype=np.int32)
         if self.annotations:
