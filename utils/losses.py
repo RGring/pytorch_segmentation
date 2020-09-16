@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from sklearn.utils import class_weight 
-from utils.lovasz_losses import lovasz_softmax
+from utils.lovasz_losses import lovasz_softmax, lovasz_hinge
 
 def make_one_hot(labels, classes):
     one_hot = torch.FloatTensor(labels.size()[0], classes, labels.size()[2], labels.size()[3]).zero_().to(labels.device)
@@ -86,4 +86,17 @@ class LovaszSoftmax(nn.Module):
     def forward(self, output, target):
         logits = F.softmax(output, dim=1)
         loss = lovasz_softmax(logits, target, ignore=self.ignore_index)
+        return loss
+
+
+class LovaszHinge(nn.Module):
+    def __init__(self, classes='present', per_image=False, ignore_index=255):
+        super(LovaszHinge, self).__init__()
+        self.smooth = classes
+        self.per_image = per_image
+        self.ignore_index = ignore_index
+
+    def forward(self, output, target):
+        logits = F.softmax(output, dim=1)
+        loss = lovasz_hinge(logits[:, 1, :, :], target, ignore=self.ignore_index)
         return loss
