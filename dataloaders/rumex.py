@@ -27,12 +27,13 @@ class RumexDataset(BaseDataSet):
             image_dir = os.path.join(self.root, split)
             if "imgs_fake" in split:
                 self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{split.replace("imgs_fake/", "")}.xml')))
-            elif "backgrounds" == self.split:
+            elif "backgrounds" == split:
                 pass
             else:
                 self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml')))
 
             file_ids = glob(image_dir + '/*.jpg')
+            file_ids.sort()
             for id in file_ids:
                 if self.num_subimg_splits > 0:
                     for i in range(self.num_subimg_splits):
