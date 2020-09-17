@@ -16,6 +16,7 @@ import dataloaders
 import models
 from utils.helpers import colorize_mask
 from collections import OrderedDict
+import cv2
 
 def pad_image(img, target_size):
     rows_to_pad = max(target_size[0] - img.shape[2], 0)
@@ -64,8 +65,15 @@ def multi_scale_predict(model, image, scales, num_classes, device, flip=False):
     total_predictions = np.zeros((num_classes, image.size(2), image.size(3)))
 
     image = image.data.data.cpu().numpy()
+
     for scale in scales:
-        scaled_img = ndimage.zoom(image, (1.0, 1.0, float(scale), float(scale)), order=1, prefilter=False)
+        # Resizing image like in dataloader.
+        image = np.squeeze(image)
+        image = image.reshape((image.shape[1], image.shape[2], image.shape[0]))
+        new_size = (int(input_size[1]*scale), int(input_size[0]*scale))
+        scaled_img = cv2.resize(image, new_size, interpolation=cv2.INTER_LINEAR)
+        scaled_img = scaled_img.reshape((scaled_img.shape[2], scaled_img.shape[0], scaled_img.shape[1]))
+        scaled_img = np.expand_dims(scaled_img, 0)
         scaled_img = torch.from_numpy(scaled_img).to(device)
         scaled_prediction = upsample(model(scaled_img).cpu())
 
@@ -103,6 +111,7 @@ def main():
         scales = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25] 
     else:
         scales = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+    scales = [0.3333333]
     loader = getattr(dataloaders, config['train_loader']['type'])(**config['train_loader']['args'])
     to_tensor = transforms.ToTensor()
     normalize = transforms.Normalize(loader.MEAN, loader.STD)
