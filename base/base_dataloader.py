@@ -28,7 +28,7 @@ class BaseDataLoader(DataLoader):
         self.shuffle = False
 
         split_indx = int(self.nbr_examples * split)
-        np.random.seed(0)
+        # np.random.seed(0)
         
         indxs = np.arange(self.nbr_examples)
         np.random.shuffle(indxs)
