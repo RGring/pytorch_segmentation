@@ -57,7 +57,6 @@ class Trainer(BaseTrainer):
 
             # LOSS & OPTIMIZE
             self.optimizer.zero_grad()
-            print(data.shape)
             output = self.model(data)
             if self.config['arch']['type'][:3] == 'PSP':
                 assert output[0].size()[2:] == target.size()[1:]

@@ -4,8 +4,6 @@ import json
 import math
 import torch
 import datetime
-import numpy as np
-import random
 from torch.utils import tensorboard
 from utils import helpers
 from utils import logger
@@ -19,7 +17,6 @@ def get_instance(module, name, config, *args):
 
 class BaseTrainer:
     def __init__(self, model, loss, resume, config, train_loader, val_loader=None, train_logger=None):
-        self._set_seed()
         self.model = model
         self.loss = loss
         self.config = config
@@ -83,11 +80,6 @@ class BaseTrainer:
         self.writer = tensorboard.SummaryWriter(writer_dir)
 
         if resume: self._resume_checkpoint(resume)
-
-    def _set_seed(self, seed=43):
-        random.seed(seed)
-        torch.manual_seed(seed)
-        np.random.seed(seed)
 
     def _get_available_devices(self, n_gpu):
         sys_gpu = torch.cuda.device_count()

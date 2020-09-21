@@ -10,6 +10,14 @@ from utils import losses
 from utils import Logger
 from utils.torchsummary import summary
 from trainer import Trainer
+import numpy as np
+import random
+
+
+def set_seed(seed=43):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
 def get_instance(module, name, config, *args):
     # GET THE CORRESPONDING CLASS / FCT 
@@ -17,6 +25,7 @@ def get_instance(module, name, config, *args):
 
 def main(config, resume):
     train_logger = Logger()
+    set_seed()
 
     # DATA LOADERS
     train_loader = get_instance(dataloaders, 'train_loader', config)
