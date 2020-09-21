@@ -69,7 +69,7 @@ class BaseDataSet(Dataset):
                 longside = random.randint(int(self.base_size*0.5), int(self.base_size*2.0))
             else:
                 longside = self.base_size
-            h, w = (longside, int(1.0 * longside * w / h + 0.5)) if h > w else (int(1.0 * longside * h / w + 0.5), longside)
+            h, w = (longside, int(1.0 * longside * w / h + 0.5)) if h < w else (int(1.0 * longside * h / w + 0.5), longside)
             image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
             label = cv2.resize(label, (w, h), interpolation=cv2.INTER_NEAREST)
     
