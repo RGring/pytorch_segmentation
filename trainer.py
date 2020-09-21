@@ -99,6 +99,8 @@ class Trainer(BaseTrainer):
         seg_metrics = self._get_seg_metrics()
         for k, v in list(seg_metrics.items())[:-1]: 
             self.writer.add_scalar(f'{self.wrt_mode}/{k}', v, self.wrt_step)
+        for k, v in seg_metrics["Class_IoU"].items():
+            self.writer.add_scalar(f'{self.wrt_mode}/Class_IoU/{k}', v, self.wrt_step)
         for i, opt_group in enumerate(self.optimizer.param_groups):
             self.writer.add_scalar(f'{self.wrt_mode}/Learning_rate_{i}', opt_group['lr'], self.wrt_step)
             #self.writer.add_scalar(f'{self.wrt_mode}/Momentum_{k}', opt_group['momentum'], self.wrt_step)
