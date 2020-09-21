@@ -11,7 +11,6 @@ from utils import Logger
 from utils.torchsummary import summary
 from trainer import Trainer
 
-
 def get_instance(module, name, config, *args):
     # GET THE CORRESPONDING CLASS / FCT
     return getattr(module, config[name]['type'])(*args, **config[name]['args'])
@@ -57,16 +56,16 @@ if __name__ == '__main__':
                         help='indices of GPUs to enable (default: all)')
     args = parser.parse_args()
 
-    args.config = "/home/rog/training_results/trained_models/50_train_lovasz_softmax/config.json"
-    args.resume = "/home/rog/training_results/trained_models/50_train_lovasz_softmax/best_model.pth"
+    # args.config = "/home/rog/training_results/trained_models/50_train_lovasz_softmax/config.json"
+    # args.resume = "/home/rog/training_results/trained_models/50_train_lovasz_softmax/best_model.pth"
 
     availble_gpus = list(range(torch.cuda.device_count()))
     args.device = torch.device('cuda:0' if len(availble_gpus) > 0 else 'cpu')
 
 
     config = json.load(open(args.config))
-    # config['val_loader']['args']['data_dir'] = "/home/rog/data/data_iphone6/klampenborgvej_lyngby/20200903_klamenborgvej_lyngby"
-    config['val_loader']['args']['data_dir'] = "/home/rog/data/data_iphone6/20200913_svanholm_alle"
+    config['val_loader']['args']['split'] = [args.dataset.split("/")[-1]]
+    config['val_loader']['args']['data_dir'] = args.dataset.replace(f"/{config['val_loader']['args']['split'][0]}", "")
 
     if args.device:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device.type
