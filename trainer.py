@@ -57,6 +57,7 @@ class Trainer(BaseTrainer):
 
             # LOSS & OPTIMIZE
             self.optimizer.zero_grad()
+            print(data.shape)
             output = self.model(data)
             if self.config['arch']['type'][:3] == 'PSP':
                 assert output[0].size()[2:] == target.size()[1:]
@@ -99,8 +100,6 @@ class Trainer(BaseTrainer):
         seg_metrics = self._get_seg_metrics()
         for k, v in list(seg_metrics.items())[:-1]: 
             self.writer.add_scalar(f'{self.wrt_mode}/{k}', v, self.wrt_step)
-        for k, v in seg_metrics["Class_IoU"].items():
-            self.writer.add_scalar(f'{self.wrt_mode}/Class_IoU/{k}', v, self.wrt_step)
         for i, opt_group in enumerate(self.optimizer.param_groups):
             self.writer.add_scalar(f'{self.wrt_mode}/Learning_rate_{i}', opt_group['lr'], self.wrt_step)
             #self.writer.add_scalar(f'{self.wrt_mode}/Momentum_{k}', opt_group['momentum'], self.wrt_step)
@@ -164,10 +163,12 @@ class Trainer(BaseTrainer):
                 self.writer.add_image(f'{self.wrt_mode}/inputs_targets_predictions', val_img, self.wrt_step)
 
                 # METRICS TO TENSORBOARD
-                self.wrt_step = (epoch) * len(self.val_loader)
+                # self.wrt_step = (epoch) * len(self.val_loader)
                 self.writer.add_scalar(f'{self.wrt_mode}/loss', self.total_loss.average, self.wrt_step)
                 for k, v in list(seg_metrics.items())[:-1]:
                     self.writer.add_scalar(f'{self.wrt_mode}/{k}', v, self.wrt_step)
+                for k, v in seg_metrics["Class_IoU"].items():
+                    self.writer.add_scalar(f'{self.wrt_mode}/Class_IoU/{k}', v, self.wrt_step)
 
             log = {
                 'val_loss': self.total_loss.average,
