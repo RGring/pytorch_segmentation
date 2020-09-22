@@ -1,12 +1,7 @@
 from base import BaseDataSet, BaseDataLoader
-from PIL import Image
 import cv2
-import os
-from glob import glob
 from utils import palette
 import numpy as np
-import math
-import xml.etree.cElementTree as ET
 from collage_generation.collage_generation import CollageGeneration
 
 class RumexOnlineDataset(BaseDataSet):
@@ -44,16 +39,6 @@ class RumexOnlineDataset(BaseDataSet):
             cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
 
         label = mask_img[:, :, 0]
-
-        # Write images for verifying correctness.
-        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
-        # cropped_label = np.where(label == 1, 120, label)
-        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
-        # mask = Image.new("L", cropped_label.size, 128)
-        # out_img = Image.composite(cropped_img, cropped_label, mask)
-        # id = index
-        # cropped_img.save(f"test_output/{id}.jpeg")
-        # out_img.save(f"test_output/{id}_masked.jpeg")
         return image, label, index
 
 class RumexOnline(BaseDataLoader):
