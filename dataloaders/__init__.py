@@ -2,4 +2,5 @@ from .coco import COCO
 from .voc import VOC
 from .ade20k import ADE20K
 from .cityscapes import CityScapes
+from .rumex_online import RumexOnline
 from .rumex import Rumex
