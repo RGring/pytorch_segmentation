@@ -31,7 +31,13 @@ class RumexOnlineDataset(BaseDataSet):
 
     def _load_data(self, index):
         mode = "mix4"
-        img_comp, polygons = self.image_generator.generate_datapoint([mode])
+        success = False
+        while not success:
+            try:
+                img_comp, polygons = self.image_generator.generate_datapoint([mode])
+                success = True
+            except:
+                pass
         image = cv2.cvtColor(img_comp[mode], cv2.COLOR_RGBA2RGB)
         image = image.astype(np.float32)
 
