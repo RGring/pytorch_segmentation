@@ -16,8 +16,12 @@ class RumexDataset(BaseDataSet):
     def __init__(self, **kwargs):
         # Must be > 3, check if set in config
         self.num_subimg_splits = 0
+        self._add_contours = kwargs["contours"]
         self.num_classes = 2
+        if self._add_contours:
+            self.num_classes +=1
         self.palette = palette.get_voc_palette(self.num_classes)
+        del kwargs["contours"]
         super(RumexDataset, self).__init__(**kwargs)
 
     def _set_files(self):
@@ -67,8 +71,9 @@ class RumexDataset(BaseDataSet):
 
     def _write_masked_imgs(self, image, label, index):
         image = np.asarray(image, dtype=np.int32)
-        label = np.where(label == 1, 120, label)
-        image = cv2.addWeighted(label, 1, image, 0.8, 0)
+        label = np.where(label == 1, 100, label)
+        label = np.where(label == 2, 200, label)
+        image = cv2.addWeighted(label, 1, image, 0.5, 0)
         cv2.imwrite(f"test_output/{index}_masked.jpeg", image)
 
     def _load_data(self, index):
@@ -82,7 +87,10 @@ class RumexDataset(BaseDataSet):
         mask_img = np.zeros(image.shape, dtype=np.int32)
         if self.annotations:
             for pol in self.annotations[os.path.basename(image_path)]:
-                cv2.fillPoly(mask_img, pts=[pol], color=(1, 1, 1))
+                cv2.fillPoly(mask_img, pts=[pol], color=(1,1,1))
+                if self._add_contours:
+                    cnt_class_id = self.num_classes - 1
+                    cv2.drawContours(mask_img, [pol], -1, (cnt_class_id, cnt_class_id, cnt_class_id), 3)
 
         if self.num_subimg_splits > 0:
             image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
@@ -105,8 +113,7 @@ class RumexDataset(BaseDataSet):
 
 class Rumex(BaseDataLoader):
     def __init__(self, data_dir, batch_size, split, crop_size=None, base_size=None, scale=True, num_workers=1,
-                 val=False,
-                 shuffle=False, flip=False, rotate=False, blur=False, augment=False, val_split=None, return_id=False):
+                 val=False, shuffle=False, flip=False, rotate=False, blur=False, augment=False, val_split=None, return_id=False, contours=False):
         self.MEAN = [0.49380072, 0.59038162, 0.4732776]
         self.STD = [0.20804656, 0.21388439, 0.21712582]
 
@@ -123,7 +130,8 @@ class Rumex(BaseDataLoader):
             'blur': blur,
             'rotate': rotate,
             'return_id': return_id,
-            'val': val
+            'val': val,
+            'contours': contours
         }
 
         self.dataset = RumexDataset(**kwargs)
