@@ -38,7 +38,8 @@ class RumexOnlineDataset(BaseDataSet):
                 success = True
             except:
                 pass
-        image = cv2.cvtColor(img_comp[mode], cv2.COLOR_RGBA2RGB)
+        image = cv2.cvtColor(img_comp[mode], cv2.COLOR_BGRA2BGR)
+        image = cv2.cvtColor(img_comp[mode], cv2.COLOR_BGR2RGB)
         image = image.astype(np.float32)
 
         mask_img = np.zeros(image.shape, dtype=np.int32)
