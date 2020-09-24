@@ -52,7 +52,11 @@ class RumexOnlineDataset(BaseDataSet):
         for polygon in polygons:
             pol = polygon.get_polygon_points_as_array()
             cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
-        # Write images for verifying correctness.
+
+        if image.shape[0] > image.shape[1]:
+            image = np.swapaxes(image, 0, 1)
+            mask_img = np.swapaxes(mask_img, 0, 1)
+
         # Write images for verifying correctness.
         # self._write_masked_imgs(image, label, index)
 
