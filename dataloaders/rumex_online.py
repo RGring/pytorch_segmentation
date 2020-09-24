@@ -3,7 +3,6 @@ import cv2
 from utils import palette
 import numpy as np
 from collage_generation.collage_generation import CollageGeneration
-from PIL import Image
 
 class RumexOnlineDataset(BaseDataSet):
     """
@@ -29,6 +28,12 @@ class RumexOnlineDataset(BaseDataSet):
         out_folder = f"{self.root}/dummy"
         self.image_generator = CollageGeneration(background_folder, rumex_crops_folder, non_rumex_crops_folder, ann_path, out_folder)
 
+    def _write_masked_imgs(self, image, label, index):
+        image = np.asarray(image, dtype=np.int32)
+        label = np.where(label == 1, 120, label)
+        image = cv2.addWeighted(label, 1, image, 0.8, 0)
+        cv2.imwrite(f"test_output/{index}_masked.jpeg", image)
+
     def _load_data(self, index):
         mode = "mix4"
         success = False
@@ -37,9 +42,10 @@ class RumexOnlineDataset(BaseDataSet):
                 img_comp, polygons = self.image_generator.generate_datapoint([mode])
                 success = True
             except:
-                pass
+                continue
+
         image = cv2.cvtColor(img_comp[mode], cv2.COLOR_BGRA2BGR)
-        image = cv2.cvtColor(img_comp[mode], cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.astype(np.float32)
 
         mask_img = np.zeros(image.shape, dtype=np.int32)
@@ -47,14 +53,8 @@ class RumexOnlineDataset(BaseDataSet):
             pol = polygon.get_polygon_points_as_array()
             cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
         # Write images for verifying correctness.
-        # label = mask_img
-        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
-        # cropped_label = np.where(label == 1, 120, label)
-        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
-        # mask = Image.new("L", cropped_label.size, 128)
-        # out_img = Image.composite(cropped_img, cropped_label, mask)
-        # cropped_img.save(f"test_output/{index}.jpeg")
-        # out_img.save(f"test_output/{index}_masked.jpeg")
+        # Write images for verifying correctness.
+        # self._write_masked_imgs(image, label, index)
 
         label = mask_img[:, :, 0]
         return image, label, index

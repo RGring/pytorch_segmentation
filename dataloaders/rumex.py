@@ -1,5 +1,4 @@
 from base import BaseDataSet, BaseDataLoader
-from PIL import Image
 import cv2
 import os
 from glob import glob
@@ -13,6 +12,7 @@ class RumexDataset(BaseDataSet):
     """
     Custom Rumex Dataset
     """
+
     def __init__(self, **kwargs):
         # Must be > 3, check if set in config
         self.num_subimg_splits = 0
@@ -26,7 +26,8 @@ class RumexDataset(BaseDataSet):
         for split in self.split:
             image_dir = os.path.join(self.root, split)
             if "imgs_fake" in split:
-                self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, f'ann/annotations_{split.replace("imgs_fake/", "")}.xml')))
+                self.annotations.update(self._read_cvat_annotations(
+                    os.path.join(self.root, f'ann/annotations_{split.replace("imgs_fake/", "")}.xml')))
             elif "backgrounds" == split:
                 pass
             else:
@@ -38,7 +39,8 @@ class RumexDataset(BaseDataSet):
                 if self.num_subimg_splits > 0:
                     for i in range(self.num_subimg_splits):
                         for j in range(self.num_subimg_splits):
-                            self.files.append({"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
+                            self.files.append(
+                                {"file_id": id, "sub_img_id": f"{id}_{i}_{j}", "split_x": i, "split_y": j})
                 else:
                     self.files.append({"file_id": id, "sub_img_id": f"{id}_{0}_{0}", "split_x": 0, "split_y": 0})
 
@@ -57,19 +59,30 @@ class RumexDataset(BaseDataSet):
         return ann
 
     def _get_sub_img(self, img, split_x, split_y):
-        w_img, h_img =  img.shape[0:2]
+        w_img, h_img = img.shape[0:2]
         w_subimg = math.floor(w_img / self.num_subimg_splits)
         h_subimg = math.floor(h_img / self.num_subimg_splits)
-        return img[split_x * w_subimg:split_x * w_subimg + w_subimg, split_y * h_subimg:split_y * h_subimg + h_subimg, :]
+        return img[split_x * w_subimg:split_x * w_subimg + w_subimg, split_y * h_subimg:split_y * h_subimg + h_subimg,
+               :]
+
+    def _write_masked_imgs(self, image, label, index):
+        image = np.asarray(image, dtype=np.int32)
+        label = np.where(label == 1, 120, label)
+        image = cv2.addWeighted(label, 1, image, 0.8, 0)
+        cv2.imwrite(f"test_output/{index}_masked.jpeg", image)
 
     def _load_data(self, index):
+        # Read image
         subimg_id = self.files[index]
         image_path = subimg_id["file_id"]
-        image = np.asarray(Image.open(image_path).convert('RGB'), dtype=np.float32)
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        image = np.asarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), dtype=np.float32)
+
+        # Generate mask
         mask_img = np.zeros(image.shape, dtype=np.int32)
         if self.annotations:
             for pol in self.annotations[os.path.basename(image_path)]:
-                cv2.fillPoly(mask_img, pts = [pol], color=(1, 1, 1))
+                cv2.fillPoly(mask_img, pts=[pol], color=(1, 1, 1))
 
         if self.num_subimg_splits > 0:
             image = self._get_sub_img(image, subimg_id["split_x"], subimg_id["split_y"])
@@ -77,24 +90,23 @@ class RumexDataset(BaseDataSet):
         else:
             label = mask_img
 
-        # Write images for verifying correctness.
-        # cropped_img = Image.fromarray(image.astype(dtype="uint8"))
-        # cropped_label = np.where(label == 1, 120, label)
-        # cropped_label = Image.fromarray(cropped_label.astype(dtype="uint8"))
-        # mask = Image.new("L", cropped_label.size, 128)
-        # out_img = Image.composite(cropped_img, cropped_label, mask)
-        # id = subimg_id["sub_img_id"]
-        # cropped_img.save(f"test_output/{id}.jpeg")
-        # out_img.save(f"test_output/{id}_masked.jpeg")
+        # Make: shortside x longside
+        if image.shape[0] > image.shape[1]:
+            image = np.swapaxes(image, 0, 1)
+            label = np.swapaxes(label, 0, 1)
+
+        # DEBUGGING: Write images for verifying correctness.
+        # self._write_masked_imgs(image, label, index)
 
         # For training, only one channel needed.
         label = label[:, :, 0]
         return image, label, subimg_id["sub_img_id"]
 
-class Rumex(BaseDataLoader):
-    def __init__(self, data_dir, batch_size, split, crop_size=None, base_size=None, scale=True, num_workers=1, val=False,
-                    shuffle=False, flip=False, rotate=False, blur= False, augment=False, val_split= None, return_id=False):
 
+class Rumex(BaseDataLoader):
+    def __init__(self, data_dir, batch_size, split, crop_size=None, base_size=None, scale=True, num_workers=1,
+                 val=False,
+                 shuffle=False, flip=False, rotate=False, blur=False, augment=False, val_split=None, return_id=False):
         self.MEAN = [0.49380072, 0.59038162, 0.4732776]
         self.STD = [0.20804656, 0.21388439, 0.21712582]
 
