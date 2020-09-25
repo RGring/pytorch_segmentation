@@ -27,12 +27,13 @@ class RumexDataset(BaseDataSet):
     def _set_files(self):
         self.annotations = {}
         self.files = []
-        for split in self.split:
-            image_dir = os.path.join(self.root, split)
-            if "imgs_fake" in split:
+        for ds_split in self.split:
+            image_dir = os.path.join(self.root, ds_split)
+            if "imgs_fake" in ds_split:
+                identifier = ds_split.split("/")[-1]
                 self.annotations.update(self._read_cvat_annotations(
-                    os.path.join(self.root, f'ann/annotations_{split.replace("imgs_fake/", "")}.xml')))
-            elif "backgrounds" == split:
+                    os.path.join(self.root, f'ann/{ds_split.replace("/%s"%identifier, "")}/annotations_{identifier}.xml')))
+            elif "backgrounds" == ds_split:
                 pass
             else:
                 self.annotations.update(self._read_cvat_annotations(os.path.join(self.root, 'ann/annotations.xml')))
