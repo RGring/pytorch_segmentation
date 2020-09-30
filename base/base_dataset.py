@@ -5,7 +5,6 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
-from scipy import ndimage
 
 class BaseDataSet(Dataset):
     def __init__(self, root, split, mean, std, base_size=None, augment=True, val=False,
@@ -62,6 +61,31 @@ class BaseDataSet(Dataset):
 
     def _augmentation(self, image, label):
         h, w, _ = image.shape
+
+        if self.blur:
+            if random.uniform(0.0, 1.0) > 0.7:
+                # blur = random.choice(["motion_blur", "median_blur", "gaussian_blur"])
+                if True:
+                    ksize = random.randint(10, 30)
+                    # generating the kernel
+                    kernel_motion_blur = np.zeros((ksize, ksize))
+                    if random.uniform(0.0, 1.0) > 0.5:
+                        kernel_motion_blur[int((ksize - 1) / 2), :] = np.ones(ksize)
+                    else:
+                        kernel_motion_blur[:, int((ksize - 1) / 2)] = np.ones(ksize)
+                    kernel_motion_blur = kernel_motion_blur / ksize
+
+                    # applying the kernel to the input image
+                    image = cv2.filter2D(image, -1, kernel_motion_blur)
+                elif False: #blur == "median_blur":
+                    ksize = random.choice([3, 5])
+                    image = cv2.medianBlur(image, ksize)
+                else:
+                    sigma = random.uniform(1.0, 2.0)
+                    ksize = int(3.3 * sigma)
+                    ksize = ksize + 1 if ksize % 2 == 0 else ksize
+                    image = cv2.GaussianBlur(image, (ksize, ksize), sigmaX=sigma, sigmaY=sigma, borderType=cv2.BORDER_REFLECT_101)
+
         # Scaling, we set the bigger to base size, and the smaller 
         # one is rescaled to maintain the same ratio, if we don't have any obj in the image, re-do the processing
         if self.base_size:
@@ -111,12 +135,6 @@ class BaseDataSet(Dataset):
                 image = np.fliplr(image).copy()
                 label = np.fliplr(label).copy()
 
-        # Gaussian Blud (sigma between 0 and 1.5)
-        if self.blur:
-            sigma = random.random()
-            ksize = int(3.3 * sigma)
-            ksize = ksize + 1 if ksize % 2 == 0 else ksize
-            image = cv2.GaussianBlur(image, (ksize, ksize), sigmaX=sigma, sigmaY=sigma, borderType=cv2.BORDER_REFLECT_101)
         return image, label
         
     def __len__(self):
