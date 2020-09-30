@@ -75,6 +75,7 @@ class RumexDataset(BaseDataSet):
         label = np.where(label == 1, 100, label)
         label = np.where(label == 2, 200, label)
         image = cv2.addWeighted(label, 1, image, 0.5, 0)
+        image = cv2.cvtColor(np.asarray(image, dtype=np.uint8), cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"test_output/{index}_masked.jpeg", image)
 
     def _load_data(self, index):
