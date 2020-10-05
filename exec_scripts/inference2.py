@@ -82,7 +82,7 @@ def main():
     model.to(device)
     model.eval()
 
-    scales = [0.75, 1.0, 1.25]
+    scales = [1.0]
 
     image_files = sorted(glob(os.path.join(args.images, f'*.{args.extension}')))
     with torch.no_grad():
