@@ -41,9 +41,9 @@ def multi_scale_predict(model, image, scales, num_classes, device, normalize, fl
     total_predictions /= len(scales)
     return torch.from_numpy(total_predictions).to(device).unsqueeze(0)
 
-def main():
-    args = parse_arguments()
-    config = json.load(open(args.config))
+
+def main(config_file, model_file, image_folder, output_folder, extension="jpg"):
+    config = json.load(open(config_file))
 
     # Dataset used for training the model
     dataset_type = config['train_loader']['type']
@@ -62,7 +62,7 @@ def main():
     device = torch.device('cuda:0' if len(availble_gpus) > 0 else 'cpu')
 
     # Load checkpoint
-    checkpoint = torch.load(args.model, map_location=device)
+    checkpoint = torch.load(model_file, map_location=device)
     if isinstance(checkpoint, dict) and 'state_dict' in checkpoint.keys():
         checkpoint = checkpoint['state_dict']
     # If during training, we used data parallel
@@ -84,7 +84,7 @@ def main():
 
     scales = [1.0]
 
-    image_files = sorted(glob(os.path.join(args.images, f'*.{args.extension}')))
+    image_files = sorted(glob(os.path.join(image_folder, f'*.{extension}')))
     with torch.no_grad():
         tbar = tqdm(image_files, ncols=100)
         for img_file in tbar:
@@ -103,7 +103,7 @@ def main():
             prediction = upsample(prediction)
             _, prediction = torch.max(prediction.squeeze(0), 0)
             prediction = prediction.cpu().numpy()
-            save_images(image, prediction, args.output, img_file, palette)
+            save_images(image, prediction, output_folder, img_file, palette)
 
 
 def parse_arguments():
@@ -125,4 +125,5 @@ def parse_arguments():
 
 
 if __name__ == '__main__':
-    main()
+    args = parse_arguments()
+    main(args.config, args.model, args.images, args.output, args.extension)
